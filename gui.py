@@ -1,33 +1,21 @@
+import win32gui
 import tkinter
 from tkinter import ttk
 from tkinter import filedialog
+import cv2
 from PIL import ImageTk, Image
-# import newvedio
-from vedio import *
+import vedio
 
-
-def shangchuan():
+def upload():
     root = tkinter.Tk()
     root.withdraw()
     Filepath = filedialog.askopenfilename()  # 获得选择好的文件
     print('Filepath:', Filepath)
 #播放按钮
-def bofang():
-    root = tkinter.Tk()
-    root.withdraw()
-    Filepath = filedialog.askopenfilename()  # 获得选择好的文件
-    
-    print('Filepath:', Filepath)
-
-    v =Vedio(vedio_file=Filepath,
-            model_def="config/ptsc.cfg",
-            weights_path="weights/ptsc-new-20-epoch.pth",
-            class_path="config/ptsc.names",
-            conf_thres=0.8,
-            nms_thres=0.1,
-            img_size=416)
-    for x in v.play_vedio():
-        print(x)
+def play():
+    v = vedio.Vedio()
+    for message in v.play_vedio
+        print(message)
 
 def set_win_center(root, curWidth='', curHight=''):
     '''
@@ -92,9 +80,9 @@ imgpath6 = 'img/6.png'
 img6 = Image.open(imgpath6)
 photo6 = ImageTk.PhotoImage(img6)
 canvas.pack()
-b1=tkinter.Button(root,relief='raised', cursor="hand2",image=photo4 ,width=40, command=shangchuan)
+b1=tkinter.Button(root,relief='raised', cursor="hand2",image=photo4 ,width=40, command=upload)
 b1.pack()
-b2=tkinter.Button(root,relief='raised',cursor="hand2",image=photo5, width=40, command=bofang)
+b2=tkinter.Button(root,relief='raised',cursor="hand2",image=photo5, width=40, command=play)
 b2.pack()
 canvas.create_window(260, 200, width=120, height=45,window=b1)
 canvas.create_window(260, 350, width=120, height=45,window=b2)
