@@ -1,4 +1,4 @@
-import win32gui
+#import win32gui
 import tkinter
 from tkinter import ttk
 from tkinter import filedialog
@@ -14,7 +14,7 @@ def upload():
 #播放按钮
 def play():
     v = vedio.Vedio()
-    for message in v.play_vedio
+    for message in v.play_vedio():
         print(message)
 
 def set_win_center(root, curWidth='', curHight=''):
