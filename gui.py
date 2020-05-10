@@ -1,8 +1,6 @@
-#import win32gui
 import tkinter
 from tkinter import ttk
 from tkinter import filedialog
-import cv2
 from PIL import ImageTk, Image
 import vedio
 
@@ -14,8 +12,22 @@ def upload():
 #播放按钮
 def play():
     v = vedio.Vedio()
+    root = tkinter.Tk()
+    root.title("warning")
+    root.geometry("300x300+300+300")
+    root.resizable(False, False)  # 窗口不可调整大小
+    root.update()  # 必须
+    scroll = tkinter.Scrollbar()
+    scroll.pack(side=tkinter.RIGHT, fill=tkinter.Y)
+    text = tkinter.Text(root, width=50, height=15)
+    text.pack()
+    scroll.config(command=text.yview)
+    text.config(yscrollcommand=scroll.set)
     for message in v.play_vedio():
-        print(message)
+        text.insert(tkinter.INSERT,message)
+        text.insert(tkinter.END,'\n')
+    tkinter.mainloop()
+
 
 def set_win_center(root, curWidth='', curHight=''):
     '''
