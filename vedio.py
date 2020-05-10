@@ -51,6 +51,15 @@ def changeRGB2BGR(img):
 
     return img
 
+
+def getXKey(x):
+    return x[0]
+
+
+def getYKey(x):
+    return x[1]
+
+
 #####################################额外导入的轨迹函数部分START#########################################################
 def calc_center(out_boxes, out_classes, out_scores, score_limit=0.5):  ###添加一个种类参数
     outboxes_filter = []
@@ -80,6 +89,7 @@ def calc_center(out_boxes, out_classes, out_scores, score_limit=0.5):  ###添加
         centers.append(center)
     return centers, number
 
+
 def get_colors_for_classes(num_classes):
     """Return list of random colors for number of classes given."""
     # Use previously generated colors if num_classes is the same.
@@ -92,7 +102,7 @@ def get_colors_for_classes(num_classes):
     colors = list(
         map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)),
             colors))
-    #colors = [(255,99,71) if c==(255,0,0) else c for c in colors ]  # 单独修正颜色，可去除
+    # colors = [(255,99,71) if c==(255,0,0) else c for c in colors ]  # 单独修正颜色，可去除
     random.seed(10101)  # Fixed seed for consistent colors across runs.
     random.shuffle(colors)  # Shuffle colors to decorrelate adjacent classes.
     random.seed(None)  # Reset seed to default.
@@ -121,7 +131,7 @@ def trackerDetection(tracker, image, centers, number, max_point_distance=30, max
     # print("***************************")
     font = cv2.FONT_HERSHEY_SIMPLEX
 
-    #cv2.putText(image, str(number), (20, 40), font, 1, (0, 0, 255), 5)  # 左上角，人数计数
+    # cv2.putText(image, str(number), (20, 40), font, 1, (0, 0, 255), 5)  # 左上角，人数计数
 
     if (len(centers) > 0):
         # Track object using Kalman Filter
@@ -135,7 +145,6 @@ def trackerDetection(tracker, image, centers, number, max_point_distance=30, max
             # print(outbox[i])
             # print(outbox)
             # print("------------------")
-
 
             # 多个轨迹
             if (len(tracker.tracks[i].trace) > 1):
@@ -179,26 +188,33 @@ def trackerDetection(tracker, image, centers, number, max_point_distance=30, max
 
     return tracker, image, road
 
-#############################################额外导入的轨迹函数部分END###################################################
 
+#############################################额外导入的轨迹函数部分END###################################################
 
 
 class Vedio():
     def __init__(self,
-            vedio_file="data/vedio/video-01.mp4",
-            model_def="config/ptsc.cfg",
-            weights_path="weights/ptsc-new-20-epoch.pth",
-            class_path="config/ptsc.names",
-            conf_thres=0.8,
-            nms_thres=0.1,
-            img_size=416):
-        self.vedio_file=vedio_file
-        self.model_def=model_def
-        self.weights_path=weights_path
-        self.class_path=class_path
-        self.conf_thres=conf_thres
-        self.nms_thres=nms_thres
-        self.img_size=img_size
+                 car_weight_path="weights/car_num.pth",
+                 vedio_file="data/vedio/video-01.mp4",
+                 car_model_def="config/plate.cfg",
+                 car_class_path="config/plate.names",
+                 model_def="config/ptsc.cfg",
+                 weights_path="weights/ptsc-new-20-epoch.pth",
+                 class_path="config/ptsc.names",
+                 conf_thres=0.8,
+                 nms_thres=0.1,
+                 img_size=416):
+        self.car_class_path = car_class_path
+        self.car_model_def = car_model_def
+
+        self.vedio_file = vedio_file
+        self.model_def = model_def
+        self.weights_path = weights_path
+        self.class_path = class_path
+        self.conf_thres = conf_thres
+        self.nms_thres = nms_thres
+        self.img_size = img_size
+        self.plate_classes=car_class_path
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         model = Darknet(model_def, img_size=img_size).to(device)
         if self.weights_path.endswith(".weights"):
@@ -206,9 +222,23 @@ class Vedio():
             model.load_darknet_weights(self.weights_path)
         else:
             # Load checkpoint weights
+            print(self.weights_path)
             model.load_state_dict(torch.load(self.weights_path))
         model.eval()
-        self.model=model
+        self.model = model
+        model_plate = Darknet(self.car_model_def, img_size=img_size).to(device)
+        self.model_plate=model_plate
+        #if car_weight_path.endswith(".weights"):
+            # Load darknet weights
+            #print("fuck")
+            #model_plate.load_darknet_weights(self.weights_path)
+        #else:
+            # Load checkpoint weights
+            #print(self.weights_path)
+        model_plate.load_state_dict(torch.load(car_weight_path))
+        model_plate.eval()
+        # model_plate.eval()
+        # self.model_plate=model_plate
 
 
     def play_vedio(self):
@@ -233,7 +263,7 @@ class Vedio():
             RGBimg = changeBGR2RGB(img)
             imgTensor = transforms.ToTensor()(RGBimg)
             imgTensor, _ = pad_to_square(imgTensor, 0)
-            imgTensor = resize(imgTensor, 416)
+            imgTensor = resize(imgTensor, self.img_size)
             imgTensor = imgTensor.unsqueeze(0)
             imgTensor = Variable(imgTensor.type(Tensor))
             with torch.no_grad():
@@ -251,31 +281,70 @@ class Vedio():
                     out_scores = []
                     ###############################图片的对角坐标保存，轨迹的变量END######################
                 if detections is not None:
-                        detections = rescale_boxes(detections, self.img_size, RGBimg.shape[:2])
-                        unique_labels = detections[:, -1].cpu().unique()
-                        n_cls_preds = len(unique_labels)
-                        for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
-                            #############################图片的对角坐标保存，轨迹的变量START##########################################
-                            out_boxs.append((x1, y1, x2, y2))
-                            out_classes.append(int(cls_pred))
-                            out_scores.append(cls_conf.item())
-                            ############################图片的对角坐标保存，轨迹的变量END#############################################
-                            box_w = x2 - x1
-                            box_h = y2 - y1
-                            color = [int(c) for c in colors[int(cls_pred)]]
-                            # print(cls_conf)
-                            img = cv2.rectangle(img, (x1, y1 + box_h), (x2, y1), color, 2)
-                            cv2.putText(img, classes[int(cls_pred)], (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
-                            cv2.putText(img, str("%.2f" % float(conf)), (x2, y2 - box_h), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
-                                        color, 2)
+                    print(detections)
+                    detections = rescale_boxes(detections, self.img_size, RGBimg.shape[:2])
+                    unique_labels = detections[:, -1].cpu().unique()
+                    n_cls_preds = len(unique_labels)
+                    for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
+                        print(x1, " ", y1)
+                        print(x2, " ", y2)
+                        #############################图片的对角坐标保存，轨迹的变量START##########################################
+                        out_boxs.append((x1, y1, x2, y2))
+                        out_classes.append(int(cls_pred))
+                        out_scores.append(cls_conf.item())
+                        ############################图片的对角坐标保存，轨迹的变量END#############################################
+                        box_w = x2 - x1
+                        box_h = y2 - y1
+                        color = [int(c) for c in colors[int(cls_pred)]]
+                        # print(cls_conf)
+                        img = cv2.rectangle(img, (x1, y1 + box_h), (x2, y1), color, 2)
+                        cv2.putText(img, classes[int(cls_pred)], (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+                        cv2.putText(img, str("%.2f" % float(conf)), (x2, y2 - box_h), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
+                                    color, 2)
+                        # 识别车牌
+                        if classes[int(cls_pred)] == "car":
 
-                ################################步骤二载入数据START#################################################
-                            centers, number = calc_center(out_boxs, out_classes, out_scores, score_limit=0.6)
-                            tracker, result, road = trackerDetection(tracker, img, centers, number, max_point_distance=20)
-                            yield number
-                ################################步骤二载入数据END####################################################################
-                            cv2.putText(result, str(round(road * 20, 2)) + "km/h",(int(x2), int(y2)), cv2.FONT_HERSHEY_SIMPLEX, 0.5,color, 2)
+                            car_classes = load_classes(self.car_class_path)
+                            car_img = img[int(y1):int(y1) + int(box_h), int(x1):int(x1 + box_w)].copy()
+                            car_img = changeBGR2RGB(car_img)
+                            imgCarTensor = transforms.ToTensor()(car_img)
+                            imgCarTensor, _ = pad_to_square(imgCarTensor, 0)
+                            imgCarTensor = resize(imgCarTensor, self.img_size)
+                            imgCarTensor = imgCarTensor.unsqueeze(0)
+                            imgCarTensor = Variable(imgCarTensor.type(Tensor))
+                            # if car_img is not None:
+                            # cv2.imshow("fuck",car_img)
+                            with torch.no_grad():
+                                plate_detections = self.model_plate(imgCarTensor)
+                                plate_detections = non_max_suppression(plate_detections, self.conf_thres, self.nms_thres)
+                            res=[]
+                            if plate_detections[0] is not None:
 
+                                plate_detections = rescale_boxes(plate_detections[0], self.img_size, car_img.shape[:2])
+                                for x1, y1, x2, y2, conf, cls_conf, cls_pred in plate_detections:
+                                    box_w = x2 - x1
+                                    box_h = y2 - y1
+                                    #print(car_classes[int(cls_pred)])
+                                    if cls_pred != 0:
+                                        car_num_single = (float(x1), float(y1) + box_h, car_classes[int(cls_pred)])
+                                        res.append(car_num_single)
+                                res.sort(key=getYKey)
+                                res.sort(key=getXKey)
+                                plate_pre=""
+                                for x in res:
+                                    plate_pre = plate_pre + x[2]
+                                print(plate_pre)
+
+
+
+                        # end识别车牌
+                        ################################步骤二载入数据START#################################################
+                        centers, number = calc_center(out_boxs, out_classes, out_scores, score_limit=0.6)
+                        tracker, result, road = trackerDetection(tracker, img, centers, number, max_point_distance=20)
+                        yield number
+                        ################################步骤二载入数据END####################################################################
+                        cv2.putText(result, str(round(road * 20, 2)) + "km/h", (int(x2), int(y2)),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
             cv2.imshow('frame', changeRGB2BGR(RGBimg))
             # cv2.waitKey(0)
@@ -288,6 +357,7 @@ class Vedio():
 
         cap.release()
         cv2.destroyAllWindows()
+
 
 if __name__ == "__main__":
     v = Vedio()
