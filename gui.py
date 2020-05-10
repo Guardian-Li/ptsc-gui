@@ -23,7 +23,7 @@ def play():
     text.pack()
     scroll.config(command=text.yview)
     text.config(yscrollcommand=scroll.set)
-    for message in v.play_vedio():
+    for message in [v.play_vedio()]:
         text.insert(tkinter.INSERT,message)
         text.insert(tkinter.END,'\n')
     tkinter.mainloop()
