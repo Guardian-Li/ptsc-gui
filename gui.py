@@ -1,8 +1,8 @@
 import tkinter
-from tkinter import ttk
 from tkinter import filedialog
 from PIL import ImageTk, Image
 import vedio
+import matplotlib.pyplot as plt
 
 def upload():
     root = tkinter.Tk()
@@ -23,9 +23,12 @@ def play():
     text.pack()
     scroll.config(command=text.yview)
     text.config(yscrollcommand=scroll.set)
-    for message in [v.play_vedio()]:
-        text.insert(tkinter.INSERT,message)
-        text.insert(tkinter.END,'\n')
+
+    for message in v.play_vedio():
+        pass
+
+
+
     tkinter.mainloop()
 
 
@@ -58,50 +61,51 @@ def set_win_center(root, curWidth='', curHight=''):
     size_xy = '%dx%d+%d+%d' % (curWidth, curHight, cen_x, cen_y)
     root.geometry(size_xy)
 
-root=tkinter.Tk()
-root.title('云城交通')
-# root.geometry('400x500')
-Filepath=""
-root.resizable(False, False)  # 窗口不可调整大小
-root.update()  # 必须
-set_win_center(root, 400, 600)
-# 背景
-canvas = tkinter.Canvas(root, width=400,bg="#FFFFFF",height=600, bd=0, highlightthickness=0)
+if __name__ == '__main__':
+    root = tkinter.Tk()
+    root.title('云城交通')
+    # root.geometry('400x500')
+    Filepath = ""
+    root.resizable(False, False)  # 窗口不可调整大小
+    root.update()  # 必须
+    set_win_center(root, 400, 600)
+    # 背景
+    canvas = tkinter.Canvas(root, width=400, bg="#FFFFFF", height=600, bd=0, highlightthickness=0)
 
-imgpath1 = 'img/1.png'
-img1 = Image.open(imgpath1)
-photo1 = ImageTk.PhotoImage(img1)
+    imgpath1 = 'img/1.png'
+    img1 = Image.open(imgpath1)
+    photo1 = ImageTk.PhotoImage(img1)
 
-imgpath2 = 'img/2.png'
-img2 = Image.open(imgpath2)
-photo2 = ImageTk.PhotoImage(img2)
+    imgpath2 = 'img/2.png'
+    img2 = Image.open(imgpath2)
+    photo2 = ImageTk.PhotoImage(img2)
 
-imgpath3 = 'img/3.png'
-img3 = Image.open(imgpath3)
-photo3 = ImageTk.PhotoImage(img3)
+    imgpath3 = 'img/3.png'
+    img3 = Image.open(imgpath3)
+    photo3 = ImageTk.PhotoImage(img3)
 
-imgpath4 = 'img/4.png'
-img4 = Image.open(imgpath4)
-photo4 = ImageTk.PhotoImage(img4)
+    imgpath4 = 'img/4.png'
+    img4 = Image.open(imgpath4)
+    photo4 = ImageTk.PhotoImage(img4)
 
-imgpath5 = 'img/5.png'
-img5 = Image.open(imgpath5)
-photo5 = ImageTk.PhotoImage(img5)
+    imgpath5 = 'img/5.png'
+    img5 = Image.open(imgpath5)
+    photo5 = ImageTk.PhotoImage(img5)
 
-imgpath6 = 'img/6.png'
-img6 = Image.open(imgpath6)
-photo6 = ImageTk.PhotoImage(img6)
-canvas.pack()
-b1=tkinter.Button(root,relief='raised', cursor="hand2",image=photo4 ,width=40, command=upload)
-b1.pack()
-b2=tkinter.Button(root,relief='raised',cursor="hand2",image=photo5, width=40, command=play)
-b2.pack()
-canvas.create_window(260, 200, width=120, height=45,window=b1)
-canvas.create_window(260, 350, width=120, height=45,window=b2)
-canvas.create_image(100,10,anchor='nw',image=photo1)
-canvas.create_image(50,150,anchor='nw',image=photo2)
-canvas.create_image(50,300,anchor='nw',image=photo3)
-canvas.create_image(230,420,anchor='nw',image=photo6)
+    imgpath6 = 'img/6.png'
+    img6 = Image.open(imgpath6)
+    photo6 = ImageTk.PhotoImage(img6)
+    canvas.pack()
+    b1 = tkinter.Button(root, relief='raised', cursor="hand2", image=photo4, width=40, command=upload)
+    b1.pack()
+    b2 = tkinter.Button(root, relief='raised', cursor="hand2", image=photo5, width=40, command=play)
+    b2.pack()
+    canvas.create_window(260, 200, width=120, height=45, window=b1)
+    canvas.create_window(260, 350, width=120, height=45, window=b2)
+    canvas.create_image(100, 10, anchor='nw', image=photo1)
+    canvas.create_image(50, 150, anchor='nw', image=photo2)
+    canvas.create_image(50, 300, anchor='nw', image=photo3)
+    canvas.create_image(230, 420, anchor='nw', image=photo6)
 
-#消息循环
-root.mainloop()
+    # 消息循环
+    root.mainloop()
