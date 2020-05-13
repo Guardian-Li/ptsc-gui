@@ -95,13 +95,21 @@ if __name__ == '__main__':
     imgpath6 = 'img/6.png'
     img6 = Image.open(imgpath6)
     photo6 = ImageTk.PhotoImage(img6)
+
+    imgpath7 = 'img/7.png'
+    img7 = Image.open(imgpath7)
+    photo7 = ImageTk.PhotoImage(img7)
+
     canvas.pack()
     b1 = tkinter.Button(root, relief='raised', cursor="hand2", image=photo4, width=40, command=upload)
     b1.pack()
     b2 = tkinter.Button(root, relief='raised', cursor="hand2", image=photo5, width=40, command=play)
     b2.pack()
+    b3 = tkinter.Button(root, relief='raised', cursor="hand2", image=photo7, width=40, command=play)
+    b3.pack()
     canvas.create_window(260, 200, width=120, height=45, window=b1)
     canvas.create_window(260, 350, width=120, height=45, window=b2)
+    canvas.create_window(100, 500, width=120, height=45, window=b3)
     canvas.create_image(100, 10, anchor='nw', image=photo1)
     canvas.create_image(50, 150, anchor='nw', image=photo2)
     canvas.create_image(50, 300, anchor='nw', image=photo3)
