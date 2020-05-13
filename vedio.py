@@ -24,7 +24,8 @@ from matplotlib.ticker import NullLocator
 ###额外导入部分
 from objecttracker.KalmanFilterTracker import Tracker  # 加载卡尔曼滤波函数
 import colorsys
-
+##########下面是导入的额外的计算点与线关系的工具库
+from utils.point_line import *
 
 def changeBGR2RGB(img):
     b = img[:, :, 0].copy()
@@ -110,7 +111,7 @@ def get_colors_for_classes(num_classes):
     return colors
 
 
-def trackerDetection(tracker, image, centers, number, max_point_distance=30, max_colors=20, track_id_size=0.8):
+def trackerDetection(tracker, image, centers, count, max_point_distance=30, max_colors=20, track_id_size=0.8):
     '''
         - max_point_distance为两个点之间的欧式距离不能超过30
             - 有多条轨迹,tracker.tracks;
@@ -132,6 +133,9 @@ def trackerDetection(tracker, image, centers, number, max_point_distance=30, max
     font = cv2.FONT_HERSHEY_SIMPLEX
 
     # cv2.putText(image, str(number), (20, 40), font, 1, (0, 0, 255), 5)  # 左上角，人数计数
+    ##################################红绿灯线的位置START#############################
+    RoadLine = Segment(Point(300,250), Point(800,250))
+    ##################################红绿灯线的位置END###############################
 
     if (len(centers) > 0):
         # Track object using Kalman Filter
@@ -150,12 +154,14 @@ def trackerDetection(tracker, image, centers, number, max_point_distance=30, max
             if (len(tracker.tracks[i].trace) > 1):
                 x0, y0 = tracker.tracks[i].trace[-1][0][0], tracker.tracks[i].trace[-1][1][0]
                 ##铺设轨迹点
-                cv2.putText(result, str(tracker.tracks[i].track_id), (int(x0), int(y0)), font, track_id_size,
-                            (255, 255, 255), 4)
+                # cv2.putText(result, str(tracker.tracks[i].track_id), (int(x0), int(y0)), font, track_id_size,
+                #             (255, 255, 255), 4)
 
                 # (image,text,(x,y),font,size,color,粗细)
 
                 #############################绘制轨迹START############################
+
+                print("")
                 for j in range(len(tracker.tracks[i].trace) - 1):
                     # 每条轨迹的每个点
                     # Draw trace line
@@ -165,15 +171,22 @@ def trackerDetection(tracker, image, centers, number, max_point_distance=30, max
                     y2 = tracker.tracks[i].trace[j + 1][1][0]
                     clr = tracker.tracks[i].track_id % 9
                     distance = ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
-                    ######################两次画面移动距离###############
+                    ######################两次画面移动距离START###############
                     diverdistance = ((x2 - x1) ** 2 + (y2 - y1) ** 2)
                     road = diverdistance
-                    ######################两次画面移动距离###############
+                    ######################两次画面移动距离END###############
+
+                    ######################中心点的线段START#################
+                    MidLine = Segment(Point(tracker.tracks[i].trace[0][0][0],tracker.tracks[i].trace[0][1][0]), Point(tracker.tracks[i].trace[j][0][0],tracker.tracks[i].trace[j][1][0]))
+                    if segmentsIntersect(RoadLine,MidLine) and tracker.tracks[i].flag[i]==False:
+                        tracker.tracks[i].flag[i] = True
+                        count += 1
+                    ######################中心点的线段START#################
+
                     # print(distance)
                     # print(x1,y1)
                     # print(x2,y2)
                     # print("----------------------------")
-
                     ############################添加显示速度
                     if distance < max_point_distance:
                         cv2.line(result, (int(x1), int(y1)), (int(x2), int(y2)),
@@ -184,9 +197,10 @@ def trackerDetection(tracker, image, centers, number, max_point_distance=30, max
                         # cv2.line(result, (int(x2), int(y2)), (int(x1+x2), int(y1+y2)),
                         #          track_colors[clr], 4)
                         #############################类积分添加预测点END######################
-                ################################绘制轨迹END#############################
 
-    return tracker, image, road
+                ################################绘制轨迹END#############################s
+
+    return tracker, image, road,count
 
 
 #############################################额外导入的轨迹函数部分END###################################################
@@ -194,7 +208,7 @@ def trackerDetection(tracker, image, centers, number, max_point_distance=30, max
 
 class Vedio():
     def __init__(self,
-                 car_weight_path="weights/car_num.pth",
+                 # car_weight_path="weights/car_num.pth",
                  vedio_file="data/vedio/video-01.mp4",
                  car_model_def="config/plate.cfg",
                  car_class_path="config/plate.names",
@@ -235,7 +249,7 @@ class Vedio():
         #else:
             # Load checkpoint weights
             #print(self.weights_path)
-        model_plate.load_state_dict(torch.load(car_weight_path))
+        # model_plate.load_state_dict(torch.load(car_weight_path))
         model_plate.eval()
         # model_plate.eval()
         # self.model_plate=model_plate
@@ -252,7 +266,9 @@ class Vedio():
         time_begin = time.time()
         NUM = cap.get(cv2.CAP_PROP_FRAME_COUNT)
         # NUM=0
-
+        ####################初始化人流总数##################
+        count = 0
+        ####################初始化人流总数##################
         while cap.isOpened():
             ret, img = cap.read()
             if ret is False:
@@ -340,11 +356,19 @@ class Vedio():
                         # end识别车牌
                         ################################步骤二载入数据START#################################################
                         centers, number = calc_center(out_boxs, out_classes, out_scores, score_limit=0.6)
-                        tracker, result, road = trackerDetection(tracker, img, centers, number, max_point_distance=20)
+                        tracker, result, road,count = trackerDetection(tracker, img, centers, count, max_point_distance=20)
                         yield number
                         ################################步骤二载入数据END####################################################################
-                        cv2.putText(result, str(round(road * 20, 2)) + "km/h", (int(x2), int(y2)),
+
+                        #################################绘制车辆得车速检测START#######################################
+                        #########由于数据得不准确，所以采用初始值优化速度###############################################
+                        bestroad = 2.5
+                        if road != 0 and road <= 7:
+                            bestroad = road
+                        #########由于数据得不准确，所以采用初始值优化速度###############################################
+                        cv2.putText(result, str(round(bestroad * 20, 2)) + "km/h", (int(x2), int(y2)),
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+                        #################################绘制车辆得车速检测END#########################################
 
             cv2.imshow('frame', changeRGB2BGR(RGBimg))
             # cv2.waitKey(0)
@@ -354,6 +378,10 @@ class Vedio():
         time_end = time.time()
         time_total = time_end - time_begin
         print(NUM // time_total)
+        ####################输出人流总数##################
+        print("人流总人数："+str(int(count/11*3600)))
+        yield "人流总人数："+str(int(count/11*3600))
+        ####################输出人流总数##################
 
         cap.release()
         cv2.destroyAllWindows()
