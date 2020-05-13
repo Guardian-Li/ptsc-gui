@@ -128,6 +128,12 @@ class Track(object):
         self.skipped_frames = 0  # number of frames skipped undetected
         self.trace = []  # trace path
 
+        ##############增加车辆标记参数###############
+        self.flag = [False]*10000
+        ##############增加车辆标记参数###############
+
+
+
 
 class Tracker(object):
     """Tracker class that updates track vectors of object tracked
