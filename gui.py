@@ -3,12 +3,13 @@ from tkinter import filedialog
 from PIL import ImageTk, Image
 import vedio
 import matplotlib.pyplot as plt
+import os
 
 def upload():
     root = tkinter.Tk()
     root.withdraw()
     Filepath = filedialog.askopenfilename()  # 获得选择好的文件
-    print('Filepath:', Filepath)
+
 #播放按钮
 def play():
     v = vedio.Vedio()
@@ -23,14 +24,18 @@ def play():
     text.pack()
     scroll.config(command=text.yview)
     text.config(yscrollcommand=scroll.set)
-
     for message in v.play_vedio():
         pass
-
-
-
     tkinter.mainloop()
 
+def plate():
+    v = vedio.Vedio()
+    root = tkinter.Tk()
+    root.withdraw()
+    Filepath = filedialog.askdirectory()  # 获得选择好的文件
+    v.detect(Filepath)
+    start_directory = r'output\samples'
+    os.startfile(start_directory)
 
 def set_win_center(root, curWidth='', curHight=''):
     '''
@@ -105,7 +110,7 @@ if __name__ == '__main__':
     b1.pack()
     b2 = tkinter.Button(root, relief='raised', cursor="hand2", image=photo5, width=40, command=play)
     b2.pack()
-    b3 = tkinter.Button(root, relief='raised', cursor="hand2", image=photo7, width=40, command=play)
+    b3 = tkinter.Button(root, relief='raised', cursor="hand2", image=photo7, width=40, command=plate)
     b3.pack()
     canvas.create_window(260, 200, width=120, height=45, window=b1)
     canvas.create_window(260, 350, width=120, height=45, window=b2)
