@@ -162,7 +162,6 @@ def trackerDetection(tracker, image, centers, count, max_point_distance=30, max_
 
                 #############################绘制轨迹START############################
 
-                print("")
                 for j in range(len(tracker.tracks[i].trace) - 1):
                     # 每条轨迹的每个点
                     # Draw trace line
@@ -209,7 +208,7 @@ def trackerDetection(tracker, image, centers, count, max_point_distance=30, max_
 
 class Vedio():
     def __init__(self,
-                 # car_weight_path="weights/car_num.pth",
+                 car_weight_path="weights/car_num.pth",
                  vedio_file="data/vedio/video-01.mp4",
                  car_model_def="config/plate.cfg",
                  car_class_path="config/plate.names",
@@ -254,7 +253,7 @@ class Vedio():
         #else:
             # Load checkpoint weights
             #print(self.weights_path)
-        # model_plate.load_state_dict(torch.load(car_weight_path))
+        model_plate.load_state_dict(torch.load(car_weight_path))
         model_plate.eval()
         # model_plate.eval()
         # self.model_plate=model_plate
